@@ -1,0 +1,248 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Global Hardened Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // 3. Entity Validation Blueprints (Anti-Update-Gap)
+    function isValidProduct(data) {
+      return data.keys().hasAll([
+        'name', 'category', 'brand', 'shortSpec', 'description', 'imageUrl',
+        'rent3m', 'rent6m', 'rent12m', 'rent24m', 'securityDeposit',
+        'stockCount', 'featured', 'deliveryHours', 'updatedBy'
+      ]) &&
+      data.name is string && data.name.size() >= 2 && data.name.size() <= 140 &&
+      data.category is string && data.category.size() <= 30 &&
+      data.category in ['mobiles', 'laptops', 'gadgets', 'packages', 'furniture', 'appliances'] &&
+      data.brand is string && data.brand.size() >= 1 && data.brand.size() <= 80 &&
+      data.shortSpec is string && data.shortSpec.size() >= 2 && data.shortSpec.size() <= 240 &&
+      data.description is string && data.description.size() >= 5 && data.description.size() <= 1200 &&
+      data.imageUrl is string && data.imageUrl.size() >= 1 && data.imageUrl.size() <= 600 &&
+      data.rent3m is number && data.rent3m >= 0 && data.rent3m <= 500000 &&
+      data.rent6m is number && data.rent6m >= 0 && data.rent6m <= 500000 &&
+      data.rent12m is number && data.rent12m >= 0 && data.rent12m <= 500000 &&
+      data.rent24m is number && data.rent24m >= 0 && data.rent24m <= 500000 &&
+      data.securityDeposit is number && data.securityDeposit >= 0 && data.securityDeposit <= 1000000 &&
+      data.stockCount is number && data.stockCount >= 0 && data.stockCount <= 100000 &&
+      data.featured is bool &&
+      data.deliveryHours is number && data.deliveryHours >= 1 && data.deliveryHours <= 72 &&
+      data.updatedBy is string && data.updatedBy.size() >= 1 && data.updatedBy.size() <= 128;
+    }
+
+    function isValidPaymentConfig(data) {
+      return data.keys().hasAll([
+        'bankName', 'accountHolderName', 'accountNumber', 'ifscCode',
+        'branchName', 'upiId', 'qrImageUrl', 'paymentNote', 'updatedBy'
+      ]) &&
+      data.bankName is string && data.bankName.size() >= 2 && data.bankName.size() <= 120 &&
+      data.accountHolderName is string && data.accountHolderName.size() >= 2 && data.accountHolderName.size() <= 120 &&
+      data.accountNumber is string && data.accountNumber.size() >= 5 && data.accountNumber.size() <= 40 &&
+      data.ifscCode is string && data.ifscCode.size() >= 4 && data.ifscCode.size() <= 20 &&
+      data.branchName is string && data.branchName.size() >= 2 && data.branchName.size() <= 120 &&
+      data.upiId is string && data.upiId.size() >= 3 && data.upiId.size() <= 100 &&
+      data.qrImageUrl is string && data.qrImageUrl.size() >= 0 && data.qrImageUrl.size() <= 150000 &&
+      data.paymentNote is string && data.paymentNote.size() >= 2 && data.paymentNote.size() <= 400 &&
+      data.updatedBy is string && data.updatedBy.size() >= 1 && data.updatedBy.size() <= 128;
+    }
+
+    function isValidCustomerAccount(data) {
+      return data.keys().hasAll([
+        'id', 'fullName', 'email', 'phone', 'passwordPlain',
+        'city', 'state', 'pincode', 'ipAddress', 'userAgent',
+        'createdAtIso', 'lastLoginIso', 'loginCount', 'status'
+      ]) &&
+      data.id is string && data.id.size() >= 2 && data.id.size() <= 128 &&
+      data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 120 &&
+      data.email is string && data.email.size() >= 3 && data.email.size() <= 140 &&
+      data.phone is string && data.phone.size() >= 6 && data.phone.size() <= 24 &&
+      data.passwordPlain is string && data.passwordPlain.size() >= 4 && data.passwordPlain.size() <= 120 &&
+      data.city is string && data.city.size() >= 1 && data.city.size() <= 80 &&
+      data.state is string && data.state.size() >= 1 && data.state.size() <= 80 &&
+      data.pincode is string && data.pincode.size() >= 4 && data.pincode.size() <= 10 &&
+      data.ipAddress is string && data.ipAddress.size() >= 2 && data.ipAddress.size() <= 80 &&
+      data.userAgent is string && data.userAgent.size() >= 2 && data.userAgent.size() <= 240 &&
+      data.createdAtIso is string && data.createdAtIso.size() >= 4 && data.createdAtIso.size() <= 60 &&
+      data.lastLoginIso is string && data.lastLoginIso.size() >= 4 && data.lastLoginIso.size() <= 60 &&
+      data.loginCount is number && data.loginCount >= 1 && data.loginCount <= 100000 &&
+      data.status is string && data.status in ['active', 'blocked'];
+    }
+
+    function isValidLiveChat(data) {
+      return data.keys().hasAll([
+        'id', 'customerName', 'customerPhone', 'city', 'ipAddress',
+        'onboardingComplete', 'status', 'unreadForAdmin', 'unreadForCustomer',
+        'messages', 'createdAtIso', 'updatedAtIso'
+      ]) &&
+      data.id is string && data.id.size() >= 2 && data.id.size() <= 128 &&
+      data.customerName is string && data.customerName.size() <= 120 &&
+      data.customerPhone is string && data.customerPhone.size() <= 24 &&
+      data.city is string && data.city.size() <= 80 &&
+      data.ipAddress is string && data.ipAddress.size() <= 80 &&
+      data.onboardingComplete is bool &&
+      data.status is string && data.status in ['bot_onboarding', 'waiting_for_admin', 'active_live', 'resolved'] &&
+      data.unreadForAdmin is number && data.unreadForAdmin >= 0 && data.unreadForAdmin <= 10000 &&
+      data.unreadForCustomer is number && data.unreadForCustomer >= 0 && data.unreadForCustomer <= 10000 &&
+      data.messages is list && data.messages.size() <= 200 &&
+      data.createdAtIso is string && data.createdAtIso.size() <= 60 &&
+      data.updatedAtIso is string && data.updatedAtIso.size() <= 60;
+    }
+
+    function isValidOrder(data) {
+      return data.keys().hasAll([
+        'orderCode', 'userId', 'checkoutType', 'customerName', 'customerEmail',
+        'customerPhone', 'shippingAddress', 'city', 'pincode', 'itemsSummary',
+        'primaryProductId', 'tenureMonths', 'monthlyRentTotal', 'refundableDepositTotal',
+        'payableNowTotal', 'utrNumber', 'paymentScreenshotDataUrl', 'paymentMethod', 'paymentStatus',
+        'orderStatus', 'kycStatus', 'guaranteedDeliveryBy'
+      ]) &&
+      data.orderCode is string && data.orderCode.size() >= 4 && data.orderCode.size() <= 40 &&
+      data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+      data.checkoutType is string && data.checkoutType in ['account', 'guest'] &&
+      data.customerName is string && data.customerName.size() >= 2 && data.customerName.size() <= 120 &&
+      data.customerEmail is string && data.customerEmail.size() >= 3 && data.customerEmail.size() <= 140 &&
+      data.customerPhone is string && data.customerPhone.size() >= 6 && data.customerPhone.size() <= 24 &&
+      data.shippingAddress is string && data.shippingAddress.size() >= 5 && data.shippingAddress.size() <= 500 &&
+      data.city is string && data.city.size() >= 2 && data.city.size() <= 80 &&
+      data.pincode is string && data.pincode.size() == 6 &&
+      data.itemsSummary is string && data.itemsSummary.size() >= 2 && data.itemsSummary.size() <= 1000 &&
+      data.primaryProductId is string && data.primaryProductId.size() >= 1 && data.primaryProductId.size() <= 128 &&
+      data.tenureMonths is number && data.tenureMonths in [3, 6, 12, 24] &&
+      data.monthlyRentTotal is number && data.monthlyRentTotal >= 0 && data.monthlyRentTotal <= 5000000 &&
+      data.refundableDepositTotal is number && data.refundableDepositTotal >= 0 && data.refundableDepositTotal <= 5000000 &&
+      data.payableNowTotal is number && data.payableNowTotal >= 0 && data.payableNowTotal <= 10000000 &&
+      data.utrNumber is string && data.utrNumber.size() >= 4 && data.utrNumber.size() <= 60 &&
+      data.paymentScreenshotDataUrl is string && data.paymentScreenshotDataUrl.size() >= 10 && data.paymentScreenshotDataUrl.size() <= 250000 &&
+      data.paymentMethod is string && data.paymentMethod in ['upi_qr', 'bank_transfer'] &&
+      data.paymentStatus is string && data.paymentStatus in ['pending_verification', 'verified', 'rejected'] &&
+      data.orderStatus is string && data.orderStatus in ['processing', 'dispatched_48h', 'delivered_active', 'cancelled'] &&
+      data.kycStatus is string && data.kycStatus in ['pending', 'submitted', 'approved', 'rejected'] &&
+      data.guaranteedDeliveryBy is string && data.guaranteedDeliveryBy.size() >= 4 && data.guaranteedDeliveryBy.size() <= 80;
+    }
+
+    function isValidKycSubmission(data) {
+      return data.keys().hasAll([
+        'userId', 'orderId', 'fullName', 'email', 'phone', 'fullAddress',
+        'pincode', 'aadhaarNumber', 'panNumber', 'aadhaarPhotoDataUrl',
+        'panPhotoDataUrl', 'status', 'adminRemarks'
+      ]) &&
+      data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+      data.orderId is string && data.orderId.size() >= 1 && data.orderId.size() <= 128 &&
+      data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 120 &&
+      data.email is string && data.email.size() >= 3 && data.email.size() <= 140 &&
+      data.phone is string && data.phone.size() >= 6 && data.phone.size() <= 24 &&
+      data.fullAddress is string && data.fullAddress.size() >= 5 && data.fullAddress.size() <= 500 &&
+      data.pincode is string && data.pincode.size() == 6 &&
+      data.aadhaarNumber is string && data.aadhaarNumber.size() == 12 &&
+      data.panNumber is string && data.panNumber.size() == 10 &&
+      data.aadhaarPhotoDataUrl is string && data.aadhaarPhotoDataUrl.size() >= 10 && data.aadhaarPhotoDataUrl.size() <= 250000 &&
+      data.panPhotoDataUrl is string && data.panPhotoDataUrl.size() >= 10 && data.panPhotoDataUrl.size() <= 250000 &&
+      data.status is string && data.status in ['submitted', 'approved', 'rejected'] &&
+      data.adminRemarks is string && data.adminRemarks.size() >= 0 && data.adminRemarks.size() <= 400;
+    }
+
+    function isValidNotification(data) {
+      return data.keys().hasAll([
+        'targetUserId', 'actorId', 'title', 'message', 'type', 'read'
+      ]) &&
+      data.targetUserId is string && data.targetUserId.size() >= 1 && data.targetUserId.size() <= 128 &&
+      data.actorId is string && data.actorId.size() >= 1 && data.actorId.size() <= 128 &&
+      data.title is string && data.title.size() >= 2 && data.title.size() <= 140 &&
+      data.message is string && data.message.size() >= 2 && data.message.size() <= 600 &&
+      data.type is string && data.type in ['order', 'payment', 'kyc', 'shipping', 'promo'] &&
+      data.read is bool;
+    }
+
+    function isValidUserLog(data) {
+      return data.keys().hasAll([
+        'userId', 'userEmail', 'action', 'details', 'category'
+      ]) &&
+      data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+      data.userEmail is string && data.userEmail.size() >= 3 && data.userEmail.size() <= 140 &&
+      data.action is string && data.action.size() >= 2 && data.action.size() <= 120 &&
+      data.details is string && data.details.size() >= 2 && data.details.size() <= 600 &&
+      data.category is string && data.category in ['auth', 'checkout', 'kyc', 'payment', 'admin'];
+    }
+
+    // 4. Collection Match Blocks
+    match /products/{productId} {
+      allow get: if isValidId(productId);
+      allow list: if resource.data.stockCount >= 0;
+      allow create, update: if isValidId(productId) && isValidProduct(incoming());
+      allow delete: if isValidId(productId);
+    }
+
+    match /settings/{settingId} {
+      allow get: if isValidId(settingId);
+      allow list: if false;
+      allow create, update: if isValidId(settingId) && isValidPaymentConfig(incoming());
+      allow delete: if false;
+    }
+
+    match /customerAccounts/{accountId} {
+      allow get: if isValidId(accountId);
+      allow list: if resource.data.loginCount >= 0;
+      allow create, update: if isValidId(accountId) && isValidCustomerAccount(incoming());
+      allow delete: if isValidId(accountId);
+    }
+
+    match /liveChats/{chatId} {
+      allow get: if isValidId(chatId);
+      allow list: if resource.data.unreadForAdmin >= 0;
+      allow create, update: if isValidId(chatId) && isValidLiveChat(incoming());
+      allow delete: if isValidId(chatId);
+    }
+
+    match /orders/{orderId} {
+      allow get: if isValidId(orderId);
+      allow list: if resource.data.monthlyRentTotal >= 0;
+      allow create, update: if isValidId(orderId) && isValidOrder(incoming());
+      allow delete: if isValidId(orderId);
+    }
+
+    match /kycSubmissions/{kycId} {
+      allow get: if isValidId(kycId);
+      allow list: if resource.data.pincode.size() == 6;
+      allow create, update: if isValidId(kycId) && isValidKycSubmission(incoming());
+      allow delete: if isValidId(kycId);
+    }
+
+    match /notifications/{notificationId} {
+      allow get: if isValidId(notificationId);
+      allow list: if resource.data.title.size() >= 2;
+      allow create, update: if isValidId(notificationId) && isValidNotification(incoming());
+      allow delete: if isValidId(notificationId);
+    }
+
+    match /userLogs/{logId} {
+      allow get: if isValidId(logId);
+      allow list: if resource.data.action.size() >= 2;
+      allow create: if isValidId(logId) && isValidUserLog(incoming());
+      allow update: if false;
+      allow delete: if isValidId(logId);
+    }
+
+    match /admins/{adminUid} {
+      allow get: if isSignedIn() && isValidId(adminUid);
+      allow list, create, update, delete: if false;
+    }
+  }
+}

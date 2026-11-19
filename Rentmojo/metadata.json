@@ -1,0 +1,8 @@
+{
+  "name": "Remix Rentm0j0 — Smart Gadgets, Mobiles, Laptops \u0026 Lifestyle Rentals",
+  "description": "Rent smartphones, laptops, gaming gadgets, furniture, and appliances with guaranteed 48-hour delivery across all pincodes, instant UPI/Bank checkout, digital Aadhaar/PAN KYC, and a full admin management console.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,321 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Global Hardened Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isVerifiedUser() && (
+        request.auth.token.email == 'xleetispro@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // 3. Entity Validation Blueprints (Anti-Update-Gap)
+    function isValidProduct(data) {
+      return data.keys().hasAll([
+        'name', 'category', 'brand', 'shortSpec', 'description', 'imageUrl',
+        'rent3m', 'rent6m', 'rent12m', 'rent24m', 'securityDeposit',
+        'stockCount', 'featured', 'deliveryHours', 'updatedBy', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'name', 'category', 'brand', 'shortSpec', 'description', 'imageUrl',
+        'rent3m', 'rent6m', 'rent12m', 'rent24m', 'securityDeposit',
+        'stockCount', 'featured', 'deliveryHours', 'updatedBy', 'createdAt', 'updatedAt'
+      ]) &&
+      data.name is string && data.name.size() >= 2 && data.name.size() <= 140 &&
+      data.category is string && data.category.size() <= 30 &&
+      data.category in ['mobiles', 'laptops', 'gadgets', 'packages', 'furniture', 'appliances'] &&
+      data.brand is string && data.brand.size() >= 1 && data.brand.size() <= 80 &&
+      data.shortSpec is string && data.shortSpec.size() >= 2 && data.shortSpec.size() <= 240 &&
+      data.description is string && data.description.size() >= 5 && data.description.size() <= 1200 &&
+      data.imageUrl is string && data.imageUrl.size() >= 1 && data.imageUrl.size() <= 600 &&
+      data.rent3m is number && data.rent3m >= 0 && data.rent3m <= 500000 &&
+      data.rent6m is number && data.rent6m >= 0 && data.rent6m <= 500000 &&
+      data.rent12m is number && data.rent12m >= 0 && data.rent12m <= 500000 &&
+      data.rent24m is number && data.rent24m >= 0 && data.rent24m <= 500000 &&
+      data.securityDeposit is number && data.securityDeposit >= 0 && data.securityDeposit <= 1000000 &&
+      data.stockCount is number && data.stockCount >= 0 && data.stockCount <= 100000 &&
+      data.featured is bool &&
+      data.deliveryHours is number && data.deliveryHours >= 1 && data.deliveryHours <= 72 &&
+      data.updatedBy is string && data.updatedBy.size() >= 1 && data.updatedBy.size() <= 128 &&
+      data.updatedBy == request.auth.uid &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidPaymentConfig(data) {
+      return data.keys().hasAll([
+        'bankName', 'accountHolderName', 'accountNumber', 'ifscCode',
+        'branchName', 'upiId', 'qrImageUrl', 'paymentNote', 'updatedBy', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'bankName', 'accountHolderName', 'accountNumber', 'ifscCode',
+        'branchName', 'upiId', 'qrImageUrl', 'paymentNote', 'updatedBy', 'updatedAt'
+      ]) &&
+      data.bankName is string && data.bankName.size() >= 2 && data.bankName.size() <= 120 &&
+      data.accountHolderName is string && data.accountHolderName.size() >= 2 && data.accountHolderName.size() <= 120 &&
+      data.accountNumber is string && data.accountNumber.size() >= 5 && data.accountNumber.size() <= 40 &&
+      data.ifscCode is string && data.ifscCode.size() >= 4 && data.ifscCode.size() <= 20 &&
+      data.branchName is string && data.branchName.size() >= 2 && data.branchName.size() <= 120 &&
+      data.upiId is string && data.upiId.size() >= 3 && data.upiId.size() <= 100 &&
+      data.qrImageUrl is string && data.qrImageUrl.size() >= 0 && data.qrImageUrl.size() <= 150000 &&
+      data.paymentNote is string && data.paymentNote.size() >= 2 && data.paymentNote.size() <= 400 &&
+      data.updatedBy is string && data.updatedBy.size() >= 1 && data.updatedBy.size() <= 128 &&
+      data.updatedBy == request.auth.uid &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidOrder(data) {
+      return data.keys().hasAll([
+        'orderCode', 'userId', 'checkoutType', 'customerName', 'customerEmail',
+        'customerPhone', 'shippingAddress', 'city', 'pincode', 'itemsSummary',
+        'primaryProductId', 'tenureMonths', 'monthlyRentTotal', 'refundableDepositTotal',
+        'payableNowTotal', 'utrNumber', 'paymentScreenshotDataUrl', 'paymentMethod', 'paymentStatus',
+        'orderStatus', 'kycStatus', 'guaranteedDeliveryBy', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'orderCode', 'userId', 'checkoutType', 'customerName', 'customerEmail',
+        'customerPhone', 'shippingAddress', 'city', 'pincode', 'itemsSummary',
+        'primaryProductId', 'tenureMonths', 'monthlyRentTotal', 'refundableDepositTotal',
+        'payableNowTotal', 'utrNumber', 'paymentScreenshotDataUrl', 'paymentMethod', 'paymentStatus',
+        'orderStatus', 'kycStatus', 'guaranteedDeliveryBy', 'createdAt', 'updatedAt'
+      ]) &&
+      data.orderCode is string && data.orderCode.size() >= 4 && data.orderCode.size() <= 40 &&
+      data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+      data.checkoutType is string && data.checkoutType.size() <= 20 &&
+      data.checkoutType in ['account', 'guest'] &&
+      data.customerName is string && data.customerName.size() >= 2 && data.customerName.size() <= 120 &&
+      data.customerEmail is string && data.customerEmail.size() >= 3 && data.customerEmail.size() <= 140 &&
+      data.customerPhone is string && data.customerPhone.size() >= 6 && data.customerPhone.size() <= 24 &&
+      data.shippingAddress is string && data.shippingAddress.size() >= 5 && data.shippingAddress.size() <= 500 &&
+      data.city is string && data.city.size() >= 2 && data.city.size() <= 80 &&
+      data.pincode is string && data.pincode.size() == 6 && data.pincode.matches('^[0-9]{6}$') &&
+      data.itemsSummary is string && data.itemsSummary.size() >= 2 && data.itemsSummary.size() <= 1000 &&
+      data.primaryProductId is string && data.primaryProductId.size() >= 1 && data.primaryProductId.size() <= 128 &&
+      data.tenureMonths is number && data.tenureMonths in [3, 6, 12, 24] &&
+      data.monthlyRentTotal is number && data.monthlyRentTotal >= 0 && data.monthlyRentTotal <= 5000000 &&
+      data.refundableDepositTotal is number && data.refundableDepositTotal >= 0 && data.refundableDepositTotal <= 5000000 &&
+      data.payableNowTotal is number && data.payableNowTotal >= 0 && data.payableNowTotal <= 10000000 &&
+      data.utrNumber is string && data.utrNumber.size() >= 4 && data.utrNumber.size() <= 60 &&
+      data.paymentScreenshotDataUrl is string && data.paymentScreenshotDataUrl.size() >= 10 && data.paymentScreenshotDataUrl.size() <= 250000 &&
+      data.paymentMethod is string && data.paymentMethod.size() <= 30 &&
+      data.paymentMethod in ['upi_qr', 'bank_transfer'] &&
+      data.paymentStatus is string && data.paymentStatus.size() <= 30 &&
+      data.paymentStatus in ['pending_verification', 'verified', 'rejected'] &&
+      data.orderStatus is string && data.orderStatus.size() <= 30 &&
+      data.orderStatus in ['processing', 'dispatched_48h', 'delivered_active', 'cancelled'] &&
+      data.kycStatus is string && data.kycStatus.size() <= 30 &&
+      data.kycStatus in ['pending', 'submitted', 'approved', 'rejected'] &&
+      data.guaranteedDeliveryBy is string && data.guaranteedDeliveryBy.size() >= 4 && data.guaranteedDeliveryBy.size() <= 80 &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidKycSubmission(data) {
+      return data.keys().hasAll([
+        'userId', 'orderId', 'fullName', 'email', 'phone', 'fullAddress',
+        'pincode', 'aadhaarNumber', 'panNumber', 'aadhaarPhotoDataUrl',
+        'panPhotoDataUrl', 'status', 'adminRemarks', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'userId', 'orderId', 'fullName', 'email', 'phone', 'fullAddress',
+        'pincode', 'aadhaarNumber', 'panNumber', 'aadhaarPhotoDataUrl',
+        'panPhotoDataUrl', 'status', 'adminRemarks', 'createdAt', 'updatedAt'
+      ]) &&
+      data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+      data.orderId is string && data.orderId.size() >= 1 && data.orderId.size() <= 128 &&
+      data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 120 &&
+      data.email is string && data.email.size() >= 3 && data.email.size() <= 140 &&
+      data.phone is string && data.phone.size() >= 6 && data.phone.size() <= 24 &&
+      data.fullAddress is string && data.fullAddress.size() >= 5 && data.fullAddress.size() <= 500 &&
+      data.pincode is string && data.pincode.size() == 6 && data.pincode.matches('^[0-9]{6}$') &&
+      data.aadhaarNumber is string && data.aadhaarNumber.size() == 12 && data.aadhaarNumber.matches('^[0-9]{12}$') &&
+      data.panNumber is string && data.panNumber.size() == 10 && data.panNumber.matches('^[A-Z]{5}[0-9]{4}[A-Z]{1}$') &&
+      data.aadhaarPhotoDataUrl is string && data.aadhaarPhotoDataUrl.size() >= 10 && data.aadhaarPhotoDataUrl.size() <= 250000 &&
+      data.panPhotoDataUrl is string && data.panPhotoDataUrl.size() >= 10 && data.panPhotoDataUrl.size() <= 250000 &&
+      data.status is string && data.status.size() <= 30 &&
+      data.status in ['submitted', 'approved', 'rejected'] &&
+      data.adminRemarks is string && data.adminRemarks.size() >= 0 && data.adminRemarks.size() <= 400 &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidNotification(data) {
+      return data.keys().hasAll([
+        'targetUserId', 'actorId', 'title', 'message', 'type', 'read', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'targetUserId', 'actorId', 'title', 'message', 'type', 'read', 'createdAt', 'updatedAt'
+      ]) &&
+      data.targetUserId is string && data.targetUserId.size() >= 1 && data.targetUserId.size() <= 128 &&
+      data.actorId is string && data.actorId.size() >= 1 && data.actorId.size() <= 128 &&
+      data.actorId == request.auth.uid &&
+      data.title is string && data.title.size() >= 2 && data.title.size() <= 140 &&
+      data.message is string && data.message.size() >= 2 && data.message.size() <= 600 &&
+      data.type is string && data.type.size() <= 30 &&
+      data.type in ['order', 'payment', 'kyc', 'shipping', 'promo'] &&
+      data.read is bool &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidUserLog(data) {
+      return data.keys().hasAll([
+        'userId', 'userEmail', 'action', 'details', 'category', 'createdAt'
+      ]) &&
+      data.keys().hasOnly([
+        'userId', 'userEmail', 'action', 'details', 'category', 'createdAt'
+      ]) &&
+      data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+      data.userId == request.auth.uid &&
+      data.userEmail is string && data.userEmail.size() >= 3 && data.userEmail.size() <= 140 &&
+      data.action is string && data.action.size() >= 2 && data.action.size() <= 120 &&
+      data.details is string && data.details.size() >= 2 && data.details.size() <= 600 &&
+      data.category is string && data.category.size() <= 30 &&
+      data.category in ['auth', 'checkout', 'kyc', 'payment', 'admin'] &&
+      data.createdAt is timestamp;
+    }
+
+    // 4. Collection Match Blocks
+    match /products/{productId} {
+      allow get: if isValidId(productId);
+      allow list: if resource.data.stockCount >= 0;
+      allow create: if isVerifiedUser() && isValidId(productId) && isValidProduct(incoming()) && incoming().createdAt == request.time && incoming().updatedAt == request.time && isAdmin();
+      allow update: if isVerifiedUser() && isValidId(productId) && isValidProduct(incoming()) && incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time && isAdmin();
+      allow delete: if isVerifiedUser() && isValidId(productId) && isAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow get: if isValidId(settingId);
+      allow list: if false;
+      allow create: if isVerifiedUser() && isValidId(settingId) && isValidPaymentConfig(incoming()) && incoming().updatedAt == request.time && isAdmin();
+      allow update: if isVerifiedUser() && isValidId(settingId) && isValidPaymentConfig(incoming()) && incoming().updatedAt == request.time && isAdmin();
+      allow delete: if false;
+    }
+
+    match /orders/{orderId} {
+      allow get: if isSignedIn() && isValidId(orderId) && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isVerifiedUser() && isValidId(orderId) && isValidOrder(incoming()) &&
+        incoming().userId == request.auth.uid &&
+        incoming().paymentStatus == 'pending_verification' &&
+        incoming().orderStatus == 'processing' &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        exists(/databases/$(database)/documents/products/$(incoming().primaryProductId));
+      allow update: if isVerifiedUser() && isValidId(orderId) && isValidOrder(incoming()) &&
+        incoming().userId == existing().userId &&
+        incoming().orderCode == existing().orderCode &&
+        incoming().primaryProductId == existing().primaryProductId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (
+            existing().userId == request.auth.uid &&
+            existing().orderStatus != 'cancelled' &&
+            existing().orderStatus != 'delivered_active' &&
+            incoming().paymentStatus == 'pending_verification' &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['utrNumber', 'paymentScreenshotDataUrl', 'paymentStatus', 'kycStatus', 'updatedAt'])
+          )
+        );
+      allow delete: if isVerifiedUser() && isValidId(orderId) && isAdmin();
+    }
+
+    match /kycSubmissions/{kycId} {
+      allow get: if isSignedIn() && isValidId(kycId) && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isVerifiedUser() && isValidId(kycId) && isValidKycSubmission(incoming()) &&
+        incoming().userId == request.auth.uid &&
+        incoming().status == 'submitted' &&
+        incoming().adminRemarks == '' &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        exists(/databases/$(database)/documents/orders/$(incoming().orderId));
+      allow update: if isVerifiedUser() && isValidId(kycId) && isValidKycSubmission(incoming()) &&
+        incoming().userId == existing().userId &&
+        incoming().orderId == existing().orderId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (
+            existing().userId == request.auth.uid &&
+            existing().status != 'approved' &&
+            incoming().status == 'submitted' &&
+            incoming().adminRemarks == existing().adminRemarks &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'fullAddress', 'pincode', 'aadhaarNumber', 'panNumber',
+              'aadhaarPhotoDataUrl', 'panPhotoDataUrl', 'status', 'updatedAt'
+            ])
+          )
+        );
+      allow delete: if isVerifiedUser() && isValidId(kycId) && isAdmin();
+    }
+
+    match /notifications/{notificationId} {
+      allow get: if isSignedIn() && isValidId(notificationId) && (
+        existing().targetUserId == request.auth.uid ||
+        existing().actorId == request.auth.uid ||
+        isAdmin()
+      );
+      allow list: if isSignedIn() && (
+        resource.data.targetUserId == request.auth.uid ||
+        resource.data.actorId == request.auth.uid ||
+        isAdmin()
+      );
+      allow create: if isVerifiedUser() && isValidId(notificationId) && isValidNotification(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        (incoming().targetUserId == request.auth.uid || incoming().targetUserId == 'ADMIN' || isAdmin());
+      allow update: if isVerifiedUser() && isValidId(notificationId) && isValidNotification(incoming()) &&
+        incoming().actorId == existing().actorId &&
+        incoming().targetUserId == existing().targetUserId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (
+            existing().targetUserId == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['read', 'updatedAt'])
+          )
+        );
+      allow delete: if isVerifiedUser() && isValidId(notificationId) && isAdmin();
+    }
+
+    match /userLogs/{logId} {
+      allow get: if isSignedIn() && isValidId(logId) && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isVerifiedUser() && isValidId(logId) && isValidUserLog(incoming()) &&
+        incoming().createdAt == request.time;
+      allow update: if false;
+      allow delete: if isVerifiedUser() && isValidId(logId) && isAdmin();
+    }
+
+    match /admins/{adminUid} {
+      allow get: if isSignedIn() && isValidId(adminUid) && (request.auth.uid == adminUid || isAdmin());
+      allow list, create, update, delete: if false;
+    }
+  }
+}

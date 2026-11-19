@@ -1,0 +1,337 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Rental catalog item for mobiles, laptops, gadgets, furniture, and appliances.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 2, "maxLength": 140 },
+        "category": { "type": "string", "enum": ["mobiles", "laptops", "gadgets", "packages", "furniture", "appliances"] },
+        "brand": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "shortSpec": { "type": "string", "minLength": 2, "maxLength": 240 },
+        "description": { "type": "string", "minLength": 5, "maxLength": 1200 },
+        "imageUrl": { "type": "string", "minLength": 1, "maxLength": 600 },
+        "rent3m": { "type": "number" },
+        "rent6m": { "type": "number" },
+        "rent12m": { "type": "number" },
+        "rent24m": { "type": "number" },
+        "securityDeposit": { "type": "number" },
+        "stockCount": { "type": "number" },
+        "featured": { "type": "boolean" },
+        "deliveryHours": { "type": "number" },
+        "updatedBy": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "name",
+        "category",
+        "brand",
+        "shortSpec",
+        "description",
+        "imageUrl",
+        "rent3m",
+        "rent6m",
+        "rent12m",
+        "rent24m",
+        "securityDeposit",
+        "stockCount",
+        "featured",
+        "deliveryHours",
+        "updatedBy",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PaymentConfig": {
+      "title": "PaymentConfig",
+      "description": "Admin-managed bank details and UPI QR scanner configuration for customer rental payments.",
+      "type": "object",
+      "properties": {
+        "bankName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "accountHolderName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "accountNumber": { "type": "string", "minLength": 5, "maxLength": 40 },
+        "ifscCode": { "type": "string", "minLength": 4, "maxLength": 20 },
+        "branchName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "upiId": { "type": "string", "minLength": 3, "maxLength": 100 },
+        "qrImageUrl": { "type": "string", "minLength": 0, "maxLength": 150000 },
+        "paymentNote": { "type": "string", "minLength": 2, "maxLength": 400 },
+        "updatedBy": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "bankName",
+        "accountHolderName",
+        "accountNumber",
+        "ifscCode",
+        "branchName",
+        "upiId",
+        "qrImageUrl",
+        "paymentNote",
+        "updatedBy",
+        "updatedAt"
+      ]
+    },
+    "CustomerAccount": {
+      "title": "CustomerAccount",
+      "description": "Registered customer account with login credentials, live IP address, state/city, and status.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 2, "maxLength": 128 },
+        "fullName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "email": { "type": "string", "minLength": 3, "maxLength": 140 },
+        "phone": { "type": "string", "minLength": 6, "maxLength": 24 },
+        "passwordPlain": { "type": "string", "minLength": 4, "maxLength": 120 },
+        "city": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "state": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "pincode": { "type": "string", "minLength": 6, "maxLength": 6 },
+        "ipAddress": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "userAgent": { "type": "string", "minLength": 2, "maxLength": 240 },
+        "createdAtIso": { "type": "string", "minLength": 4, "maxLength": 60 },
+        "lastLoginIso": { "type": "string", "minLength": 4, "maxLength": 60 },
+        "loginCount": { "type": "number" },
+        "status": { "type": "string", "enum": ["active", "blocked"] }
+      },
+      "required": [
+        "id",
+        "fullName",
+        "email",
+        "phone",
+        "passwordPlain",
+        "city",
+        "state",
+        "pincode",
+        "ipAddress",
+        "userAgent",
+        "createdAtIso",
+        "lastLoginIso",
+        "loginCount",
+        "status"
+      ]
+    },
+    "LiveChat": {
+      "title": "LiveChat",
+      "description": "Persistent Laxmi chatbot and live Admin support conversation session.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 2, "maxLength": 128 },
+        "customerName": { "type": "string", "minLength": 0, "maxLength": 120 },
+        "customerPhone": { "type": "string", "minLength": 0, "maxLength": 24 },
+        "customerEmail": { "type": "string", "minLength": 0, "maxLength": 140 },
+        "city": { "type": "string", "minLength": 0, "maxLength": 80 },
+        "state": { "type": "string", "minLength": 0, "maxLength": 80 },
+        "ipAddress": { "type": "string", "minLength": 0, "maxLength": 80 },
+        "enquiryProduct": { "type": "string", "minLength": 0, "maxLength": 240 },
+        "onboardingComplete": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["bot_onboarding", "waiting_for_admin", "active_live", "resolved"] },
+        "unreadForAdmin": { "type": "number" },
+        "unreadForCustomer": { "type": "number" },
+        "createdAtIso": { "type": "string", "minLength": 4, "maxLength": 60 },
+        "updatedAtIso": { "type": "string", "minLength": 4, "maxLength": 60 }
+      },
+      "required": [
+        "id",
+        "customerName",
+        "customerPhone",
+        "city",
+        "ipAddress",
+        "onboardingComplete",
+        "status",
+        "unreadForAdmin",
+        "unreadForCustomer",
+        "createdAtIso",
+        "updatedAtIso"
+      ]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer or guest checkout rental order with 48-hour guaranteed shipping and UTR payment info.",
+      "type": "object",
+      "properties": {
+        "orderCode": { "type": "string", "minLength": 4, "maxLength": 40 },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "checkoutType": { "type": "string", "enum": ["account", "guest"] },
+        "customerName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "customerEmail": { "type": "string", "minLength": 3, "maxLength": 140 },
+        "customerPhone": { "type": "string", "minLength": 6, "maxLength": 24 },
+        "shippingAddress": { "type": "string", "minLength": 5, "maxLength": 500 },
+        "city": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "pincode": { "type": "string", "pattern": "^[0-9]{6}$", "minLength": 6, "maxLength": 6 },
+        "itemsSummary": { "type": "string", "minLength": 2, "maxLength": 1000 },
+        "primaryProductId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "tenureMonths": { "type": "number" },
+        "monthlyRentTotal": { "type": "number" },
+        "refundableDepositTotal": { "type": "number" },
+        "payableNowTotal": { "type": "number" },
+        "utrNumber": { "type": "string", "minLength": 4, "maxLength": 60 },
+        "paymentScreenshotDataUrl": { "type": "string", "minLength": 10, "maxLength": 250000 },
+        "paymentMethod": { "type": "string", "enum": ["upi_qr", "bank_transfer"] },
+        "paymentStatus": { "type": "string", "enum": ["pending_verification", "verified", "rejected"] },
+        "orderStatus": { "type": "string", "enum": ["processing", "dispatched_48h", "delivered_active", "cancelled"] },
+        "kycStatus": { "type": "string", "enum": ["pending", "submitted", "approved", "rejected"] },
+        "guaranteedDeliveryBy": { "type": "string", "minLength": 4, "maxLength": 80 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "orderCode",
+        "userId",
+        "checkoutType",
+        "customerName",
+        "customerEmail",
+        "customerPhone",
+        "shippingAddress",
+        "city",
+        "pincode",
+        "itemsSummary",
+        "primaryProductId",
+        "tenureMonths",
+        "monthlyRentTotal",
+        "refundableDepositTotal",
+        "payableNowTotal",
+        "utrNumber",
+        "paymentScreenshotDataUrl",
+        "paymentMethod",
+        "paymentStatus",
+        "orderStatus",
+        "kycStatus",
+        "guaranteedDeliveryBy",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "KycSubmission": {
+      "title": "KycSubmission",
+      "description": "Customer KYC verification record containing Aadhaar number, PAN number, address, and uploaded document photos.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "orderId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "fullName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "email": { "type": "string", "minLength": 3, "maxLength": 140 },
+        "phone": { "type": "string", "minLength": 6, "maxLength": 24 },
+        "fullAddress": { "type": "string", "minLength": 5, "maxLength": 500 },
+        "pincode": { "type": "string", "pattern": "^[0-9]{6}$", "minLength": 6, "maxLength": 6 },
+        "aadhaarNumber": { "type": "string", "pattern": "^[0-9]{12}$", "minLength": 12, "maxLength": 12 },
+        "panNumber": { "type": "string", "pattern": "^[A-Z]{5}[0-9]{4}[A-Z]{1}$", "minLength": 10, "maxLength": 10 },
+        "aadhaarPhotoDataUrl": { "type": "string", "minLength": 10, "maxLength": 250000 },
+        "panPhotoDataUrl": { "type": "string", "minLength": 10, "maxLength": 250000 },
+        "status": { "type": "string", "enum": ["submitted", "approved", "rejected"] },
+        "adminRemarks": { "type": "string", "minLength": 0, "maxLength": 400 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId",
+        "orderId",
+        "fullName",
+        "email",
+        "phone",
+        "fullAddress",
+        "pincode",
+        "aadhaarNumber",
+        "panNumber",
+        "aadhaarPhotoDataUrl",
+        "panPhotoDataUrl",
+        "status",
+        "adminRemarks",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Real-time notification for customers and admins regarding orders, KYC verification, and rental updates.",
+      "type": "object",
+      "properties": {
+        "targetUserId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "actorId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "title": { "type": "string", "minLength": 2, "maxLength": 140 },
+        "message": { "type": "string", "minLength": 2, "maxLength": 600 },
+        "type": { "type": "string", "enum": ["order", "payment", "kyc", "shipping", "promo"] },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "targetUserId",
+        "actorId",
+        "title",
+        "message",
+        "type",
+        "read",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "UserLog": {
+      "title": "UserLog",
+      "description": "Immutable audit trail of user and admin actions across the platform.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "userEmail": { "type": "string", "minLength": 3, "maxLength": 140 },
+        "action": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "details": { "type": "string", "minLength": 2, "maxLength": 600 },
+        "category": { "type": "string", "enum": ["auth", "checkout", "kyc", "payment", "admin"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId",
+        "userEmail",
+        "action",
+        "details",
+        "category",
+        "createdAt"
+      ]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Trusted administrator directory record.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "minLength": 3, "maxLength": 140 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Publicly readable rental catalog managed by admins."
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/PaymentConfig" },
+      "description": "Admin-managed bank details and UPI QR scanner configuration."
+    },
+    "/customerAccounts/{accountId}": {
+      "schema": { "$ref": "#/entities/CustomerAccount" },
+      "description": "Registered customer accounts with login details and IP addresses."
+    },
+    "/liveChats/{chatId}": {
+      "schema": { "$ref": "#/entities/LiveChat" },
+      "description": "Persistent Laxmi chatbot enquiries and live Admin chat sessions."
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Customer and guest rental orders isolated by userId or admin role."
+    },
+    "/kycSubmissions/{kycId}": {
+      "schema": { "$ref": "#/entities/KycSubmission" },
+      "description": "Customer PII and Aadhaar/PAN document uploads isolated to owner and admin."
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/Notification" },
+      "description": "Real-time notifications scoped to targetUserId, actorId, or admin."
+    },
+    "/userLogs/{logId}": {
+      "schema": { "$ref": "#/entities/UserLog" },
+      "description": "Immutable activity logs viewable by owner or admin."
+    },
+    "/admins/{adminUid}": {
+      "schema": { "$ref": "#/entities/Admin" },
+      "description": "Trusted administrator membership lookup."
+    }
+  }
+}
